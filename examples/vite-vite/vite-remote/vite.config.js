@@ -1,10 +1,45 @@
 import { federation } from '@module-federation/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
 import topLevelAwait from 'vite-plugin-top-level-await';
 
+function isPlugin(plugin) {
+  if (!plugin || typeof plugin !== 'object') {
+    console.log("the thing is not an object", plugin)
+    return false
+  };
+  console.log("start finding plugin", plugin)
+  const result = plugin.constructor.name.includes('module-federation-vite') || plugin['name']?.includes('module-federation-vite');
+
+  if (result) {
+    console.log("we found mf plugin", plugin, "result", result)
+    return result
+  }
+  return false
+}
+
+function copy(
+  config
+) {
+  return config.plugins
+    ?.filter(isPlugin)
+    .map((mf) => {
+      const _mf = mf;
+      if (!_mf?._options) return;
+
+      return JSON.parse(JSON.stringify(_mf._options));
+    })
+    .filter(Boolean);
+}
+
+function print() {
+  return (config) => {
+    console.log("config.option", copy(config))
+    return config
+  }
+}
+
 // https://vitejs.dev/config/
-export default defineConfig({
+export default print()({
   server: {
     open: true,
     port: 5176,
